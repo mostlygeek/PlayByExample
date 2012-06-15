@@ -19,7 +19,7 @@ object Markdown extends Controller {
   //ref: http://software.clapper.org/markwrap/#parsing_markdown 
   private val mdparser = MarkWrap.parserFor(MarkupType.Markdown)
  
-  val base = Play.current.path + "/public/markdown" 
+  val base = Play.current.getFile("/public/markdown").getCanonicalPath
   def load(path: String) = Action {
     val file = Play.current.getFile("public/markdown/" + path)
     
@@ -33,6 +33,7 @@ object Markdown extends Controller {
   }
 
   def info() = Action {
-    Ok(Play.current.path toString)
+    Ok("Path: " + (Play.current.path getCanonicalPath) + "\n" + 
+       "Base: " + base + "\n")
   }
 }
