@@ -31,4 +31,8 @@ object Markdown extends Controller {
     else 
       NotFound
   }
+
+  def info() = Action {
+    Ok(Play.current.path toString)
+  }
 }

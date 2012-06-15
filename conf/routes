@@ -15,6 +15,7 @@ GET      /mongo/create/$id<[a-z0-9A-Z]+>   controllers.Mongo.create(id: String)
 GET      /mongo/show/$id<[a-z0-9A-Z]+>        controllers.Mongo.show(id: String)
 
 # Markdown for easier documentation of things
+GET     /markdown/info              controllers.Markdown.info
 GET     /markdown/*path             controllers.Markdown.load(path: String)
 
 # Map static resources from the /public folder to the /assets URL path
