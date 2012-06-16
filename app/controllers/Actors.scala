@@ -25,6 +25,7 @@ class HelloActor extends Actor {
   }
 }
 
+// We use case classes to send typed messages
 case class LoadFile(path:String)
 
 // This is the functional way of composing actors
@@ -34,16 +35,25 @@ class AlternateController extends Actor {
   implicit val timeout: Timeout = 5 seconds
   
   def receive = {
+    
+    // The LoadFile object tells AlternateController to
+    // load and parse the file specified by `path`
     case LoadFile(path) =>
       var controller = sender // need a permanent reference to sender
+      
+      // Pipe the output of `filesActorRef` into `parseActorRef`
       for( // for-loop comprehension, a monadic convension
         content <- Actors.filesActorRef ? path;
         parsed  <- Actors.parseActorRef ? content
       ) yield {controller ! parsed}
+    
+    // We only recognize LoadFile, all other typed messages return an error
     case _ => sender ! Error("Did not understand message")
   }
 }
 
+// This does the same as the AlternateController class
+// but is more verbose because it doesn't use for-loop comprehension
 class ParseControllerActor extends Actor {
   implicit val timeout: Timeout = Timeout(Duration(5, "seconds"))
   def receive = {
@@ -80,15 +90,26 @@ class ParseControllerActor extends Actor {
   }
 }
 
+// Parse a BufferedSource object containing markdown code
+// Return an HTML formatted string 
 class MarkdownParserActor extends Actor {
   val mdparser = MarkWrap.parserFor(MarkupType.Markdown)
   def receive = {
+    
+    // Parse a BufferedSource object
     case markdown: io.BufferedSource => sender ! mdparser.parseToHTML(markdown)
+    
+    // If an error has been piped from another object, propagate it
+    // A cool error feature would be to build a stack-trace of all the actors
+    // the error has been received by.
     case error: Error => sender ! error
+    
+    // Create a new error in all other cases
     case _ => sender ! Error("Markdown Parser Did Not Understand Request")
   }
 }
 
+// Loads files from the local file system
 class FileLoadActor extends Actor {
   
   val pathPrefix = "public/markdown/"
@@ -98,6 +119,7 @@ class FileLoadActor extends Actor {
     // Load a file from a string representing the path 
   	case path:String => 
       
+  	  // I think this appends the current play root directory
       val filePath = Play.current.getFile( pathPrefix + path)
       
       if (filePath.exists()) sender ! io.Source.fromFile(filePath)
