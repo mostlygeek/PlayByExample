@@ -27,8 +27,9 @@ object Markdown extends Controller {
    * Does a synchronous load of the markdown source. This blocks
    * the execution read, in effect, blocking answering of all requests
    * while IO is loading
+   *
    */
-  def load(path: String) = Action {
+  def loadSynchronous(path: String) = Action {
     loadAndParse(path) match {
       case Some(html) => Ok(views.html.markdown(html))
       case _ => NotFound
