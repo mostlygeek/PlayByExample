@@ -5,6 +5,7 @@ import akka.actor.Actor
 import akka.actor.Props
 import akka.pattern.ask // Implicit conversion
 import akka.util.Duration
+import akka.util.duration._
 import akka.util.Timeout
 import play.api.libs.concurrent.AkkaPromise
 import play.api.mvc.Action
@@ -21,6 +22,25 @@ class HelloActor extends Actor {
   def receive = {
     case "Hello" => sender ! "Hello World"
     case _       => sender ! "What did you say?"
+  }
+}
+
+case class LoadFile(path:String)
+
+// This is the functional way of composing actors
+class AlternateController extends Actor {
+  
+  // implicit conversion in akka.util.duration._
+  implicit val timeout: Timeout = 5 seconds
+  
+  def receive = {
+    case LoadFile(path) =>
+      var controller = sender // need a permanent reference to sender
+      for( // for-loop comprehension, a monadic convension
+        content <- Actors.filesActorRef ? path;
+        parsed  <- Actors.parseActorRef ? content
+      ) yield {controller ! parsed}
+    case _ => sender ! Error("Did not understand message")
   }
 }
 
@@ -97,6 +117,7 @@ object Actors extends Controller {
   val filesActorRef = system.actorOf(Props[FileLoadActor],        name = "load")
   val parseActorRef = system.actorOf(Props[MarkdownParserActor],  name = "parse")
   val controllerRef = system.actorOf(Props[ParseControllerActor], name = "controller")
+  val alternateCRef = system.actorOf(Props[AlternateController],  name = "controller2")
 
   def hello = Action {
     Async {
@@ -113,6 +134,16 @@ object Actors extends Controller {
         case s:String => Ok(views.html.markdown(s))
         case Error(s) => BadRequest(s)
         case _        => NotFound("Not Found")
+      }
+    }
+  }
+  
+  def parse2(id: String) = Action {
+    Async {
+      new AkkaPromise(alternateCRef ? LoadFile(id)) map {
+        case s: String => Ok(views.html.markdown(s))
+        case Error(s)  => BadRequest(s)
+        case _         => NotFound("Not Found")
       }
     }
   }
