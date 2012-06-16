@@ -84,6 +84,7 @@ class MarkdownParserActor extends Actor {
   val mdparser = MarkWrap.parserFor(MarkupType.Markdown)
   def receive = {
     case markdown: io.BufferedSource => sender ! mdparser.parseToHTML(markdown)
+    case error: Error => sender ! error
     case _ => sender ! Error("Markdown Parser Did Not Understand Request")
   }
 }
