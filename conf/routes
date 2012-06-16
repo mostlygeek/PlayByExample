@@ -9,6 +9,7 @@ GET     /                           controllers.Application.index
 
 # Actor Examples
 GET     /actor/hello                controllers.Actors.hello
+GET     /actor/markdown/*path       controllers.Actors.parse(path: String)
 
 # MongoDB Examples
 GET      /mongo/                    controllers.Mongo.index
