@@ -7,6 +7,11 @@
 # Home page
 GET     /                           controllers.Application.index
 
+# Actor Examples
+GET     /actor/hello                controllers.Actors.hello
+GET     /actor/markdown/*path       controllers.Actors.parse(path: String)
+GET     /actor/markdown2/*path      controllers.Actors.parse2(path: String)
+
 # MongoDB Examples
 GET      /mongo/                    controllers.Mongo.index
 GET      /mongo/list                controllers.Mongo.list
