@@ -7,6 +7,9 @@
 # Home page
 GET     /                           controllers.Application.index
 
+# Actor Examples
+GET     /actor/hello                controllers.Actors.hello
+
 # MongoDB Examples
 GET      /mongo/                    controllers.Mongo.index
 GET      /mongo/list                controllers.Mongo.list
