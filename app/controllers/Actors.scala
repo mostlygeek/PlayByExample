@@ -136,7 +136,7 @@ class FileLocatorActor extends Actor {
     val files = suffixes map ( pathjail + query + _ ) map ( Play.current.getFile( _ ) )
     
     // Return all full paths that exist
-    for( file <- files if file.exists() ) yield file.getAbsolutePath()
+    for( file <- files if file.exists() ) yield file
     
   }
 }
@@ -148,10 +148,16 @@ class FileLoadActor extends Actor {
   
   def receive = {
     
-    // Load a file from a string representing the path 
-  	case path:String => 
+    // Accept a file pointer
+    // Simply read and return the contents as a BufferedSource
+    case file: java.io.File => 
+      sender ! io.Source.fromFile(file)
       
-  	  // I think this appends the current play root directory
+    // Load a file from a string representing the path
+    // The file path will be jailed by `pathPrefix`
+    case path:String => 
+      
+      // I think this appends the current play root directory
       val filePath = Play.current.getFile( pathPrefix + path)
       
       if (filePath.exists()) sender ! io.Source.fromFile(filePath)
