@@ -38,11 +38,13 @@ class AlternateController extends Actor {
     
     // The LoadFile object tells AlternateController to
     // load and parse the file specified by `path`
-    case LoadFile(path) =>
+    case LoadFile(query) =>
       var controller = sender // need a permanent reference to sender
       
       // Pipe the output of `filesActorRef` into `parseActorRef`
       for( // for-loop comprehension, a monadic convension
+        matches <- Actors.locatorRef ? query;
+        path    <- Actors.pathRanker ? matches;
         content <- Actors.filesActorRef ? path;
         parsed  <- Actors.parseActorRef ? content
       ) yield {controller ! parsed}
