@@ -109,6 +109,38 @@ class MarkdownParserActor extends Actor {
   }
 }
 
+class PathRankerActor extends Actor {
+  def receive = {
+    case list: List[_] =>
+      if (list.size == 0) sender ! Error("List is Empty")
+      sender ! list(0)
+    case error:Error => sender ! error
+    case _ => sender ! Error("Path Ranker Did Not Understand the Message")
+  }
+}
+
+// Give it a path, string, or name
+// and it returns the associated path
+class FileLocatorActor extends Actor {
+  val suffixes = List("",".md")
+  val pathjail = "public/markdown/"
+  def receive = {
+    case query:String => sender ! find(query)
+    case _            => sender ! Error("Query Type Not Understood")
+  }
+  def find(query:String) = {
+    
+    // Convert queries to a list of full path
+    // prefixed with pathjail
+    // and suffixed by suffixes
+    val files = suffixes map ( pathjail + query + _ ) map ( Play.current.getFile( _ ) )
+    
+    // Return all full paths that exist
+    for( file <- files if file.exists() ) yield file.getAbsolutePath()
+    
+  }
+}
+
 // Loads files from the local file system
 class FileLoadActor extends Actor {
   
@@ -141,7 +173,9 @@ object Actors extends Controller {
   val parseActorRef = system.actorOf(Props[MarkdownParserActor],  name = "parse")
   val controllerRef = system.actorOf(Props[ParseControllerActor], name = "controller")
   val alternateCRef = system.actorOf(Props[AlternateController],  name = "controller2")
-
+  val locatorRef    = system.actorOf(Props[FileLocatorActor])
+  val pathRanker    = system.actorOf(Props[PathRankerActor])
+  
   def hello = Action {
     Async {
       new AkkaPromise(helloActorRef ? "Hello") map {
