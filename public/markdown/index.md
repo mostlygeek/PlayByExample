@@ -27,4 +27,6 @@ https://github.com/mostlygeek/PlayByExample.
 
 * Benson Wong: [github](https://github.com/mostlygeek/), 
   [blog](http://mostlygeek.com), [twitter](https://twitter.com/mostlygeek)
-* Jacob Groundwater [github](https://github.com/jacobgroundwater)
+* Jacob Groundwater [github](https://github.com/jacobgroundwater),
+  [blog](http://underflow.ca), [twitter](https://twitter.com/ShanghaiNoob)
+  
