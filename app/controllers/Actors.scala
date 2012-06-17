@@ -114,7 +114,7 @@ class MarkdownParserActor extends Actor {
 class PathRankerActor extends Actor {
   def receive = {
     case list: List[_] =>
-      if (list.size == 0) sender ! Error("List is Empty")
+      if (list.size == 0) sender ! Error("List of possible paths is empty")
       sender ! list(0)
     case error:Error => sender ! error
     case _ => sender ! Error("Path Ranker Did Not Understand the Message")
@@ -165,6 +165,10 @@ class FileLoadActor extends Actor {
       if (filePath.exists()) sender ! io.Source.fromFile(filePath)
       else sender ! Error("File Not Found: " + filePath)
       
+    
+    // Propagate existing errors
+    case error: Error => sender ! error
+    
     // If the message is not a string, it is an error
     case _ => sender ! Error("File Load Actor Did Not Understand Message")
   }
