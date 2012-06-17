@@ -1,6 +1,6 @@
 # Welcome to Play 2.0 By Example
 
-This is a living tutorial with the goal to provide pragmatic examples for common web application requirements.
+This is a living tutorial with the goal to provide pragmatic examples for building advanced web applications with Play! 2.0.
 
 ## Fork it and contribute! 
 
@@ -11,8 +11,9 @@ https://github.com/mostlygeek/PlayByExample.
 
 * Asynchronous Results and Promises
 * Using Coffeescript
-* Using LESS 
+* [Using LESS](/content/using-less.md)
 * Using SSL for HTTP and Websockets
+* Writing Tests with Specs2
 
 ## Advanced Examples
 
