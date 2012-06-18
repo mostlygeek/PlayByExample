@@ -38,11 +38,13 @@ class AlternateController extends Actor {
     
     // The LoadFile object tells AlternateController to
     // load and parse the file specified by `path`
-    case LoadFile(path) =>
+    case LoadFile(query) =>
       var controller = sender // need a permanent reference to sender
       
       // Pipe the output of `filesActorRef` into `parseActorRef`
       for( // for-loop comprehension, a monadic convension
+        matches <- Actors.locatorRef ? query;
+        path    <- Actors.pathRanker ? matches;
         content <- Actors.filesActorRef ? path;
         parsed  <- Actors.parseActorRef ? content
       ) yield {controller ! parsed}
@@ -109,6 +111,38 @@ class MarkdownParserActor extends Actor {
   }
 }
 
+class PathRankerActor extends Actor {
+  def receive = {
+    case Nil => sender ! Error("List of possible paths is empty")
+    case list: List[_] =>
+      sender ! list(0)
+    case error:Error => sender ! error
+    case _ => sender ! Error("Path Ranker Did Not Understand the Message")
+  }
+}
+
+// Give it a path, string, or name
+// and it returns the associated path
+class FileLocatorActor extends Actor {
+  val suffixes = List("",".md")
+  val pathjail = "public/markdown/"
+  def receive = {
+    case query:String => sender ! find(query)
+    case _            => sender ! Error("Query Type Not Understood")
+  }
+  def find(query:String) = {
+    
+    // Convert queries to a list of full path
+    // prefixed with pathjail
+    // and suffixed by suffixes
+    val files = suffixes map ( pathjail + query + _ ) map ( Play.current.getFile( _ ) )
+    
+    // Return all full paths that exist
+    for( file <- files if file.exists() ) yield file
+    
+  }
+}
+
 // Loads files from the local file system
 class FileLoadActor extends Actor {
   
@@ -116,15 +150,25 @@ class FileLoadActor extends Actor {
   
   def receive = {
     
-    // Load a file from a string representing the path 
-  	case path:String => 
+    // Accept a file pointer
+    // Simply read and return the contents as a BufferedSource
+    case file: java.io.File => 
+      sender ! io.Source.fromFile(file)
       
-  	  // I think this appends the current play root directory
+    // Load a file from a string representing the path
+    // The file path will be jailed by `pathPrefix`
+    case path:String => 
+      
+      // I think this appends the current play root directory
       val filePath = Play.current.getFile( pathPrefix + path)
       
       if (filePath.exists()) sender ! io.Source.fromFile(filePath)
       else sender ! Error("File Not Found: " + filePath)
       
+    
+    // Propagate existing errors
+    case error: Error => sender ! error
+    
     // If the message is not a string, it is an error
     case _ => sender ! Error("File Load Actor Did Not Understand Message")
   }
@@ -141,7 +185,9 @@ object Actors extends Controller {
   val parseActorRef = system.actorOf(Props[MarkdownParserActor],  name = "parse")
   val controllerRef = system.actorOf(Props[ParseControllerActor], name = "controller")
   val alternateCRef = system.actorOf(Props[AlternateController],  name = "controller2")
-
+  val locatorRef    = system.actorOf(Props[FileLocatorActor])
+  val pathRanker    = system.actorOf(Props[PathRankerActor])
+  
   def hello = Action {
     Async {
       new AkkaPromise(helloActorRef ? "Hello") map {
