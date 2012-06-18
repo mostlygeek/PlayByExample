@@ -6,6 +6,7 @@ import org.clapper.markwrap._
 import java.io.{File}
 import play.api.libs.concurrent._
 import play.api.Play.current
+import play.api.cache.Cached
 
 /**
  * this controller allows us to: 
@@ -28,10 +29,12 @@ object Markdown extends Controller {
    * the execution read, in effect, blocking answering of all requests
    * while IO is loading
    */
-  def load(path: String) = Action {
-    loadAndParse(path) match {
-      case Some(html) => Ok(views.html.markdown(html))
-      case _ => NotFound
+  def load(path: String) = Cached(path) {
+    Action {
+      loadAndParse(path) match {
+        case Some(html) => Ok(views.html.markdown(html))
+        case _ => NotFound
+      }
     }
   }
  
@@ -42,17 +45,19 @@ object Markdown extends Controller {
    *
    * Ref: http://www.playframework.org/documentation/2.0.1/ScalaAsync
    */ 
-  def loadAsync(path: String) = Action {
-    Async {
-      val promise: Promise[Option[String]] = Akka.future {
-        loadAndParse(path)
-      }
+  def loadAsync(path: String) = Cached(path) { 
+    Action {
+      Async {
+        val promise: Promise[Option[String]] = Akka.future {
+          loadAndParse(path)
+        }
 
-      promise.map( i => i match {
-          case Some(html) => Ok(views.html.markdown(html))
-          case _ => NotFound
-      })
-    } 
+        promise.map( i => i match {
+            case Some(html) => Ok(views.html.markdown(html))
+            case _ => NotFound
+        })
+      } 
+    }
   }
 
   private def loadAndParse(path: String): Option[String] = {
