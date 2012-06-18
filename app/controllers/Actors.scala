@@ -113,7 +113,7 @@ class MarkdownParserActor extends Actor {
 
 class PathRankerActor extends Actor {
   def receive = {
-    case Nil: sender ! Error("List of possible paths is empty")
+    case Nil => sender ! Error("List of possible paths is empty")
     case list: List[_] =>
       sender ! list(0)
     case error:Error => sender ! error
